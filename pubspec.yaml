@@ -68,6 +68,17 @@ dependencies:
   # mendukung deep linking, redirect logic, dan type-safe routes.
   go_router: ^14.8.1
 
+  # Foreground service Android untuk timer belajar.
+  # Dipilih flutter_foreground_task (bukan flutter_background_service) karena:
+  # - Punya dukungan native untuk notifikasi persisten + tombol aksi
+  #   (Pause/Resume/Stop) langsung di notifikasi — kebutuhan inti fitur ini.
+  # - Menjalankan callback di isolate khusus yang tetap hidup saat app
+  #   di-background / layar dikunci, sehingga countdown tidak freeze.
+  # - Maintenance aktif & API stabil untuk kasus timer.
+  # Reminder berkala digabung ke notifikasi yang sama (update message),
+  # jadi tidak perlu flutter_local_notifications terpisah.
+  flutter_foreground_task: ^8.17.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

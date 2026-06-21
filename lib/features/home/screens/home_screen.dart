@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/router/app_router.dart';
 import '../../../shared/models/user_profile.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -43,36 +45,37 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // Menu items (placeholder — akan diisi di fase berikutnya)
+              // Menu items
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 2,
                   mainAxisSpacing: 14,
                   crossAxisSpacing: 14,
                   childAspectRatio: 1.1,
-                  children: const [
+                  children: [
                     _MenuCard(
                       icon: Icons.timer_outlined,
                       label: 'Timer Belajar',
                       description: 'Mulai sesi belajar',
-                      color: Color(0xFF4A90D9),
-                      enabled: false,
+                      color: const Color(0xFF4A90D9),
+                      enabled: true,
+                      onTap: () => context.go(AppRoutes.timerSetup),
                     ),
-                    _MenuCard(
+                    const _MenuCard(
                       icon: Icons.music_note_outlined,
                       label: 'Ambient Sound',
                       description: 'Suara latar belajar',
                       color: Color(0xFF7B61FF),
                       enabled: false,
                     ),
-                    _MenuCard(
+                    const _MenuCard(
                       icon: Icons.history_rounded,
                       label: 'Riwayat',
                       description: 'Lihat sesi lalu',
                       color: Color(0xFF3CB371),
                       enabled: false,
                     ),
-                    _MenuCard(
+                    const _MenuCard(
                       icon: Icons.insights_rounded,
                       label: 'Analyze Ourself',
                       description: 'Laporan AI performa',
@@ -179,6 +182,7 @@ class _MenuCard extends StatelessWidget {
     required this.description,
     required this.color,
     required this.enabled,
+    this.onTap,
   });
 
   final IconData icon;
@@ -186,6 +190,7 @@ class _MenuCard extends StatelessWidget {
   final String description;
   final Color color;
   final bool enabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +206,7 @@ class _MenuCard extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: enabled ? () {} : null,
+          onTap: enabled ? onTap : null,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

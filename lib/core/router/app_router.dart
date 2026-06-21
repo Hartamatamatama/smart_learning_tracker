@@ -7,6 +7,10 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/mood/screens/mood_journal_screen.dart';
+import '../../features/timer/providers/timer_state.dart';
+import '../../features/timer/screens/timer_run_screen.dart';
+import '../../features/timer/screens/timer_setup_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Route names (type-safe, pakai konstanta supaya tidak typo)
@@ -17,6 +21,9 @@ abstract class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/home';
+  static const timerSetup = '/timer-setup';
+  static const timerRun = '/timer-run';
+  static const moodJournal = '/mood-journal';
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +67,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         builder: (_, __) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.timerSetup,
+        builder: (_, __) => const TimerSetupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.timerRun,
+        builder: (_, __) => const TimerRunScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.moodJournal,
+        // Hanya valid jika dibuka dengan MoodNavRequest (lewat extra).
+        // Jika diakses langsung tanpa data, kembalikan ke Home.
+        redirect: (_, state) =>
+            state.extra is MoodNavRequest ? null : AppRoutes.home,
+        builder: (_, state) =>
+            MoodJournalScreen(request: state.extra as MoodNavRequest),
       ),
     ],
   );
