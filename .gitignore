@@ -52,3 +52,5 @@ app.*.map.json
 # Supabase local dev (if used)
 supabase/.temp/
 supabase/functions/node_modules/
+
+.vscode/templates

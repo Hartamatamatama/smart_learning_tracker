@@ -64,6 +64,10 @@ dependencies:
   # Shared preferences (persist preferensi ringan seperti tema)
   shared_preferences: ^2.3.5
 
+  # Routing — go_router adalah package routing resmi dari Flutter team,
+  # mendukung deep linking, redirect logic, dan type-safe routes.
+  go_router: ^14.8.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

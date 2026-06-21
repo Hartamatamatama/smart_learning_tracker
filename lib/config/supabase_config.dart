@@ -8,6 +8,10 @@ class SupabaseConfig {
     await Supabase.initialize(
       url: Env.supabaseUrl,
       publishableKey: Env.supabaseAnonKey,
+      // PKCE lebih aman dari Implicit flow — wajib untuk OAuth di mobile
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
   }
 

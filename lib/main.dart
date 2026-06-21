@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'config/supabase_config.dart';
+import 'core/router/app_router.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 
@@ -17,26 +19,20 @@ Future<void> main() async {
   );
 }
 
-class SmartLearningApp extends StatelessWidget {
+class SmartLearningApp extends ConsumerWidget {
   const SmartLearningApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'Smart Learning Tracker\nFase 0 — Fondasi siap!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      ),
+      routerConfig: router,
     );
   }
 }
