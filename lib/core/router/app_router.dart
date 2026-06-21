@@ -69,10 +69,11 @@ String? _redirect(AppAuthState authState, String location) {
   final isAuthScreen =
       location == AppRoutes.login || location == AppRoutes.register;
 
-  return switch (authState) {
-    // Sedang menentukan status auth → tahan di splash
+  final result = switch (authState) {
+    // Sedang menentukan status auth → tahan di splash atau auth screen
+    // (jangan unmount login/register agar dialog konfirmasi email bisa tampil)
     AuthInitial() || AuthLoading() =>
-      location == AppRoutes.splash ? null : AppRoutes.splash,
+      (isAuthScreen || location == AppRoutes.splash) ? null : AppRoutes.splash,
 
     // Sudah login → jangan biarkan di auth screen atau splash
     AuthAuthenticated() =>
@@ -82,4 +83,6 @@ String? _redirect(AppAuthState authState, String location) {
     AuthUnauthenticated() || AuthError() =>
       isAuthScreen ? null : AppRoutes.login,
   };
+
+  return result;
 }

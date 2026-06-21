@@ -26,7 +26,6 @@ final class AuthAuthenticated extends AppAuthState {
   final UserProfile? profile;
 }
 
-/// [message] diisi ketika registrasi berhasil tapi butuh konfirmasi email.
 final class AuthUnauthenticated extends AppAuthState {
   const AuthUnauthenticated({this.message});
   final String? message;
@@ -62,6 +61,8 @@ class AuthNotifier extends Notifier<AppAuthState> {
       case AuthChangeEvent.signedIn:
       case AuthChangeEvent.tokenRefreshed:
       case AuthChangeEvent.userUpdated:
+      // initialSession: sesi dipulihkan dari storage saat app restart
+      case AuthChangeEvent.initialSession:
         if (data.session?.user != null) {
           _loadAndSetProfile(data.session!.user);
         }
@@ -75,6 +76,10 @@ class AuthNotifier extends Notifier<AppAuthState> {
   }
 
   Future<void> _loadAndSetProfile(User user) async {
+    // Jangan override jika sudah authenticated dengan user yang sama (cegah loop)
+    if (state is AuthAuthenticated && (state as AuthAuthenticated).user.id == user.id) {
+      return;
+    }
     state = const AuthLoading();
     try {
       final data = await _client
@@ -98,8 +103,18 @@ class AuthNotifier extends Notifier<AppAuthState> {
     if (state is AuthLoading) return;
     state = const AuthLoading();
     try {
-      await _client.auth.signInWithPassword(email: email, password: password);
-      // onAuthStateChange akan memperbarui state
+      // FIX Bug 1: langsung handle response signInWithPassword, tidak hanya
+      // mengandalkan onAuthStateChange stream yang bisa delay.
+      final response = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      final user = response.user;
+      if (user != null) {
+        await _loadAndSetProfile(user);
+      } else {
+        state = const AuthUnauthenticated();
+      }
     } on AuthException catch (e) {
       state = AuthError(_mapAuthError(e.message));
     } catch (_) {
@@ -117,10 +132,9 @@ class AuthNotifier extends Notifier<AppAuthState> {
         password: password,
         data: {'full_name': fullName},
       );
-
-      if (response.session != null) {
+      if (response.session != null && response.user != null) {
         // Email confirmation dinonaktifkan → langsung masuk
-        // onAuthStateChange akan handle
+        await _loadAndSetProfile(response.user!);
         return null;
       } else {
         // Email confirmation aktif → user harus cek inbox
@@ -146,8 +160,6 @@ class AuthNotifier extends Notifier<AppAuthState> {
     state = const AuthLoading();
     try {
       // TODO: GOOGLE_SIGNIN_SETUP — lihat GOOGLE_SIGNIN_SETUP.md
-      // redirectTo untuk Android menggunakan custom URL scheme yang didaftarkan
-      // di AndroidManifest.xml. Web: null (supabase handle otomatis).
       const bool isWeb = bool.fromEnvironment('dart.library.html');
       await _client.auth.signInWithOAuth(
         OAuthProvider.google,
