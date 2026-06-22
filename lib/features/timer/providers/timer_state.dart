@@ -1,3 +1,4 @@
+import '../../ambient_sound/models/ambient_sound.dart';
 import '../models/timer_enums.dart';
 import '../models/topic.dart';
 
@@ -11,6 +12,8 @@ class MoodNavRequest {
     required this.status,
     required this.topicName,
     required this.allowBreak,
+    required this.mode,
+    required this.durationSeconds,
   });
 
   final String sessionId;
@@ -19,6 +22,11 @@ class MoodNavRequest {
 
   /// True jika setelah jurnal boleh ditawari istirahat (pomodoro completed).
   final bool allowBreak;
+
+  final TimerMode mode;
+
+  /// Durasi aktual sesi (detik) — untuk ringkasan setelah jurnal.
+  final int durationSeconds;
 }
 
 /// State runtime timer yang dirender UI.
@@ -33,6 +41,7 @@ class TimerState {
     this.isPaused = false,
     this.focusMinutes = 25,
     this.breakMinutes = 5,
+    this.ambientSound,
     this.moodNav,
     this.breakFinished = false,
     this.errorMessage,
@@ -49,6 +58,9 @@ class TimerState {
   final bool isPaused;
   final int focusMinutes;
   final int breakMinutes;
+
+  /// Ambient sound aktif sesi ini. Null jika "Tanpa suara".
+  final AmbientSound? ambientSound;
 
   final MoodNavRequest? moodNav;
   final bool breakFinished;
@@ -74,6 +86,8 @@ class TimerState {
     bool? isPaused,
     int? focusMinutes,
     int? breakMinutes,
+    AmbientSound? ambientSound,
+    bool clearAmbient = false,
     MoodNavRequest? moodNav,
     bool clearMoodNav = false,
     bool? breakFinished,
@@ -90,6 +104,7 @@ class TimerState {
       isPaused: isPaused ?? this.isPaused,
       focusMinutes: focusMinutes ?? this.focusMinutes,
       breakMinutes: breakMinutes ?? this.breakMinutes,
+      ambientSound: clearAmbient ? null : (ambientSound ?? this.ambientSound),
       moodNav: clearMoodNav ? null : (moodNav ?? this.moodNav),
       breakFinished: breakFinished ?? this.breakFinished,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),

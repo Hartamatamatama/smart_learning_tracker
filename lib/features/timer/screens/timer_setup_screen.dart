@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/router/app_router.dart';
+import '../../ambient_sound/models/ambient_sound.dart';
+import '../../ambient_sound/providers/ambient_sound_provider.dart';
 import '../models/timer_enums.dart';
 import '../models/topic.dart';
 import '../providers/timer_controller.dart';
@@ -20,6 +22,7 @@ class TimerSetupScreen extends ConsumerStatefulWidget {
 class _TimerSetupScreenState extends ConsumerState<TimerSetupScreen> {
   TimerMode _mode = TimerMode.pomodoro;
   Topic? _topic;
+  AmbientSound? _ambient; // null = Tanpa suara
   final _focusCtrl =
       TextEditingController(text: '${AppConstants.defaultFocusMinutes}');
   final _breakCtrl =
@@ -69,6 +72,7 @@ class _TimerSetupScreenState extends ConsumerState<TimerSetupScreen> {
           topic: topic,
           focusMinutes: focus,
           breakMinutes: brk,
+          ambientSound: _ambient,
         );
     if (mounted) context.go(AppRoutes.timerRun);
   }
@@ -144,6 +148,26 @@ class _TimerSetupScreenState extends ConsumerState<TimerSetupScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _pickTopic,
               ),
+            ),
+            const SizedBox(height: 24),
+
+            // Ambient sound (opsional)
+            Row(
+              children: [
+                Text('Suara Latar', style: _label(theme)),
+                const SizedBox(width: 8),
+                Text(
+                  '(opsional)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _AmbientPicker(
+              selected: _ambient,
+              onSelected: (s) => setState(() => _ambient = s),
             ),
             const SizedBox(height: 24),
 
@@ -224,6 +248,57 @@ class _MinuteField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+/// Pemilih ambient sound: chip "Tanpa suara" + satu chip per sound.
+class _AmbientPicker extends ConsumerWidget {
+  const _AmbientPicker({required this.selected, required this.onSelected});
+
+  final AmbientSound? selected;
+  final ValueChanged<AmbientSound?> onSelected;
+
+  IconData _iconFor(String category) => switch (category) {
+        'cafe' => Icons.local_cafe_outlined,
+        'white_noise' => Icons.blur_on,
+        'music' => Icons.music_note_outlined,
+        _ => Icons.nature_outlined,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final async = ref.watch(ambientSoundsProvider);
+
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: LinearProgressIndicator(),
+      ),
+      error: (e, _) => Text(
+        'Gagal memuat daftar suara.',
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+      ),
+      data: (sounds) => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ChoiceChip(
+            label: const Text('Tanpa suara'),
+            avatar: const Icon(Icons.volume_off_outlined, size: 18),
+            selected: selected == null,
+            onSelected: (_) => onSelected(null),
+          ),
+          for (final s in sounds)
+            ChoiceChip(
+              label: Text(s.name),
+              avatar: Icon(_iconFor(s.category), size: 18),
+              selected: selected?.id == s.id,
+              onSelected: (_) => onSelected(s),
+            ),
+        ],
       ),
     );
   }

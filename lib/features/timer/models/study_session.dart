@@ -16,6 +16,7 @@ class StudySession {
     required this.plannedDurationSec,
     required this.actualDurationSec,
     required this.status,
+    this.ambientSoundId,
   });
 
   final String? id;
@@ -32,6 +33,9 @@ class StudySession {
   final int actualDurationSec;
   final SessionStatus status;
 
+  /// Ambient sound yang dipakai selama sesi. Null jika "Tanpa suara".
+  final String? ambientSoundId;
+
   /// Payload untuk INSERT ke Supabase.
   Map<String, dynamic> toInsertJson() => {
         'user_id': userId,
@@ -42,5 +46,6 @@ class StudySession {
         'planned_duration_sec': plannedDurationSec,
         'actual_duration_sec': actualDurationSec,
         'status': status.dbValue,
+        'ambient_sound_id': ambientSoundId,
       };
 }

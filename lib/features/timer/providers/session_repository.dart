@@ -1,8 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/supabase_config.dart';
-import '../../../core/constants/app_constants.dart';
 import '../models/study_session.dart';
+
+/// Satu nilai mood untuk satu parameter dalam sebuah sesi.
+class MoodEntry {
+  const MoodEntry({
+    required this.parameterId,
+    required this.score,
+    this.note,
+  });
+
+  final String parameterId;
+  final int score;
+
+  /// Catatan teks bebas. Biasanya hanya diisi pada satu parameter
+  /// (mood_umum) agar tidak duplikat di 4 baris.
+  final String? note;
+}
 
 /// Repository untuk menyimpan hasil sesi belajar & jurnal mood ke Supabase.
 class SessionRepository {
@@ -26,30 +41,23 @@ class SessionRepository {
     return inserted['id'] as String;
   }
 
-  /// Ambil id parameter mood default ('mood_umum') dari tabel global.
-  Future<String> defaultMoodParameterId() async {
-    final row = await SupabaseConfig.client
-        .from('mood_parameters')
-        .select('id')
-        .eq('name', AppConstants.defaultMoodParameter)
-        .single();
-    return row['id'] as String;
-  }
-
-  /// Simpan satu nilai mood (placeholder Fase 2: 1 parameter saja).
-  Future<void> insertMoodJournal({
+  /// Simpan beberapa nilai mood sekaligus (1 baris per parameter).
+  /// Unique(session_id, mood_parameter_id) dijaga skema DB.
+  Future<void> insertMoodJournals({
     required String sessionId,
-    required int score,
-    String? note,
+    required List<MoodEntry> entries,
   }) async {
-    final parameterId = await defaultMoodParameterId();
-    await SupabaseConfig.client.from('mood_journals').insert({
-      'user_id': _userId,
-      'session_id': sessionId,
-      'mood_parameter_id': parameterId,
-      'score': score,
-      'note': note,
-    });
+    final userId = _userId;
+    final rows = entries
+        .map((e) => {
+              'user_id': userId,
+              'session_id': sessionId,
+              'mood_parameter_id': e.parameterId,
+              'score': e.score,
+              'note': e.note,
+            })
+        .toList();
+    await SupabaseConfig.client.from('mood_journals').insert(rows);
   }
 }
 

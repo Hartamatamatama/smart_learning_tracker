@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/supabase_config.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../ambient_sound/models/ambient_sound.dart';
+import '../../ambient_sound/providers/ambient_player_controller.dart';
 import '../models/study_session.dart';
 import '../models/timer_clock.dart';
 import '../models/timer_enums.dart';
@@ -49,6 +51,7 @@ class TimerController extends Notifier<TimerState> {
     required Topic topic,
     required int focusMinutes,
     required int breakMinutes,
+    AmbientSound? ambientSound,
   }) async {
     final target = mode == TimerMode.pomodoro ? focusMinutes * 60 : null;
     await _start(
@@ -58,6 +61,7 @@ class TimerController extends Notifier<TimerState> {
       targetSeconds: target,
       focusMinutes: focusMinutes,
       breakMinutes: breakMinutes,
+      ambientSound: ambientSound,
     );
   }
 
@@ -82,6 +86,7 @@ class TimerController extends Notifier<TimerState> {
     required int? targetSeconds,
     required int focusMinutes,
     required int breakMinutes,
+    AmbientSound? ambientSound,
   }) async {
     _ending = false;
     final now = DateTime.now();
@@ -98,12 +103,20 @@ class TimerController extends Notifier<TimerState> {
       isPaused: false,
       focusMinutes: focusMinutes,
       breakMinutes: breakMinutes,
+      ambientSound: ambientSound,
     );
 
     if (_useService) {
       await _startService(clock, mode, phase, targetSeconds, topic.name);
     } else {
       _startWeb(clock, targetSeconds);
+    }
+
+    // Ambient sound opsional — mulai memutar (loop) bila dipilih.
+    if (ambientSound != null) {
+      await ref
+          .read(ambientPlayerControllerProvider.notifier)
+          .start(ambientSound);
     }
   }
 
@@ -252,6 +265,7 @@ class TimerController extends Notifier<TimerState> {
           state.mode == TimerMode.pomodoro ? state.targetSeconds : null,
       actualDurationSec: elapsed,
       status: status,
+      ambientSoundId: state.ambientSound?.id,
     );
 
     try {
@@ -266,6 +280,8 @@ class TimerController extends Notifier<TimerState> {
           topicName: topic.name,
           allowBreak: state.mode == TimerMode.pomodoro &&
               status == SessionStatus.completed,
+          mode: state.mode,
+          durationSeconds: elapsed,
         ),
       );
     } catch (e) {
@@ -291,6 +307,8 @@ class TimerController extends Notifier<TimerState> {
     _webTimer?.cancel();
     _webTimer = null;
     _webClock = null;
+    // Hentikan ambient sound bila ada (sesi berakhir → suara berhenti).
+    await ref.read(ambientPlayerControllerProvider.notifier).stop();
     if (_useService && await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.stopService();
     }

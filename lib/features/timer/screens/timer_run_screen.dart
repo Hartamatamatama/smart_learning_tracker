@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/duration_formatter.dart';
+import '../../ambient_sound/models/ambient_sound.dart';
+import '../../ambient_sound/providers/ambient_player_controller.dart';
 import '../models/timer_enums.dart';
 import '../providers/timer_controller.dart';
 import '../providers/timer_state.dart';
@@ -245,6 +247,13 @@ class _TimerRunScreenState extends ConsumerState<TimerRunScreen>
                   ),
                 ),
 
+                const SizedBox(height: 28),
+
+                // Kontrol ambient sound (opsional, hanya fase fokus).
+                if (state.ambientSound != null &&
+                    state.phase == TimerPhase.focus)
+                  _AmbientControls(sound: state.ambientSound!),
+
                 const Spacer(),
 
                 // Tombol kontrol
@@ -327,6 +336,63 @@ class _ControlButton extends StatelessWidget {
         const SizedBox(height: 8),
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
       ],
+    );
+  }
+}
+
+/// Kontrol ambient sound terpisah dari timer: play/pause & mute.
+/// Mengubah ini TIDAK memengaruhi jalannya timer.
+class _AmbientControls extends ConsumerWidget {
+  const _AmbientControls({required this.sound});
+
+  final AmbientSound sound;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final player = ref.watch(ambientPlayerControllerProvider);
+    final notifier = ref.read(ambientPlayerControllerProvider.notifier);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.graphic_eq, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              sound.name,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: player.isPlaying ? 'Jeda suara' : 'Putar suara',
+            icon: Icon(player.isPlaying
+                ? Icons.pause_circle_outline
+                : Icons.play_circle_outline),
+            color: theme.colorScheme.primary,
+            onPressed: notifier.togglePlayPause,
+          ),
+          IconButton(
+            tooltip: player.isMuted ? 'Bunyikan' : 'Bisukan',
+            icon: Icon(player.isMuted
+                ? Icons.volume_off_outlined
+                : Icons.volume_up_outlined),
+            color: player.isMuted
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurface,
+            onPressed: notifier.toggleMute,
+          ),
+        ],
+      ),
     );
   }
 }
