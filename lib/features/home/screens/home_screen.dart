@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../ai_report/providers/weekly_reminder_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/models/user_profile.dart';
 
@@ -34,8 +35,12 @@ class HomeScreen extends ConsumerWidget {
             children: [
               // Greeting
               _GreetingCard(profile: profile),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
 
+              // Banner reminder laporan AI mingguan (jika perlu)
+              const _WeeklyReminderBanner(),
+
+              const SizedBox(height: 12),
               Text(
                 'Menu',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -76,12 +81,13 @@ class HomeScreen extends ConsumerWidget {
                       enabled: true,
                       onTap: () => context.go(AppRoutes.history),
                     ),
-                    const _MenuCard(
+                    _MenuCard(
                       icon: Icons.insights_rounded,
                       label: 'Analyze Ourself',
                       description: 'Laporan AI performa',
-                      color: Color(0xFFE07B39),
-                      enabled: false,
+                      color: const Color(0xFFE07B39),
+                      enabled: true,
+                      onTap: () => context.go(AppRoutes.aiReport),
                     ),
                   ],
                 ),
@@ -114,6 +120,66 @@ class HomeScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(authNotifierProvider.notifier).signOut();
     }
+  }
+}
+
+/// Banner dalam-app yang menawarkan membuat laporan evaluasi mingguan.
+/// Tap → buka layar laporan + langsung generate. X → sembunyikan hari ini.
+class _WeeklyReminderBanner extends ConsumerWidget {
+  const _WeeklyReminderBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final show = ref.watch(weeklyReminderProvider).valueOrNull ?? false;
+    if (!show) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: theme.colorScheme.tertiary.withValues(alpha: 0.4)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => context.go(AppRoutes.aiReport, extra: true),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome, color: theme.colorScheme.tertiary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Laporan evaluasi mingguanmu siap dibuat!',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text('Tap untuk lihat analisis AI performamu.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.65),
+                          )),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  tooltip: 'Sembunyikan hari ini',
+                  onPressed: () => dismissAiReminderToday(ref),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

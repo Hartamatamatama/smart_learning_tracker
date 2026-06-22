@@ -6,7 +6,16 @@ class AppConstants {
 
   // OpenRouter
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
-  static const String openRouterModel = 'mistralai/mistral-7b-instruct:free';
+  // Pakai router otomatis 'openrouter/free' (bukan model spesifik) karena
+  // daftar model gratis OpenRouter sering berubah; router ini memilih sendiri
+  // model gratis yang tersedia saat request, jadi lebih tahan perubahan.
+  static const String openRouterModel = 'openrouter/free';
+
+  // Reminder laporan AI mingguan (hari). Banner muncul jika laporan terakhir
+  // sudah lebih lama dari ini (atau belum pernah ada).
+  static const int aiReportReminderDays = 7;
+  // Minimal sesi sebelum reminder pertama ditawarkan.
+  static const int aiReportMinSessions = 3;
 
   // Timer defaults (dalam menit)
   static const int defaultFocusMinutes = 25; // Pomodoro fokus

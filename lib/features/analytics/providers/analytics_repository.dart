@@ -43,11 +43,19 @@ class AnalyticsRepository {
     }
 
     final sessionTopic = <String, String>{}; // sessionId -> topicName
+    final sessionBucketKey = <String, int>{}; // sessionId -> trend bucket index
     final topicSessionCount = <String, int>{};
+    final minutesByTopic = <String, int>{};
     var totalSeconds = 0;
     var completed = 0;
     var stoppedEarly = 0;
     final byTimeOfDay = <TimeOfDayBucket, int>{};
+
+    // Tren dikelompokkan harian jika periode pendek, mingguan jika panjang,
+    // supaya label tidak tumpang tindih di layar mobile.
+    final groupByWeek = days > 10;
+    final now = DateTime.now();
+    final bucketLabel = <int, String>{};
 
     for (final row in sessionRows) {
       final id = row['id'] as String;
@@ -56,17 +64,27 @@ class AnalyticsRepository {
               '(Topik dihapus)';
       sessionTopic[id] = topicName;
       topicSessionCount[topicName] = (topicSessionCount[topicName] ?? 0) + 1;
-      totalSeconds += (row['actual_duration_sec'] as num?)?.toInt() ?? 0;
+      final secs = (row['actual_duration_sec'] as num?)?.toInt() ?? 0;
+      totalSeconds += secs;
+      minutesByTopic[topicName] =
+          (minutesByTopic[topicName] ?? 0) + (secs / 60).round();
       final status = row['status'] as String? ?? 'completed';
       if (status == 'completed') {
         completed++;
       } else {
         stoppedEarly++;
       }
-      final hour =
-          DateTime.parse(row['started_at'] as String).toLocal().hour;
-      final bucket = TimeOfDayBucket.fromHour(hour);
-      byTimeOfDay[bucket] = (byTimeOfDay[bucket] ?? 0) + 1;
+      final started = DateTime.parse(row['started_at'] as String).toLocal();
+      byTimeOfDay[TimeOfDayBucket.fromHour(started.hour)] =
+          (byTimeOfDay[TimeOfDayBucket.fromHour(started.hour)] ?? 0) + 1;
+
+      // Indeks bucket tren: kecil = lama, besar = baru.
+      final daysAgo = now.difference(started).inDays;
+      final key = groupByWeek ? (days - 1 - daysAgo) ~/ 7 : (days - 1 - daysAgo);
+      sessionBucketKey[id] = key;
+      bucketLabel[key] = groupByWeek
+          ? 'Mgg ${key + 1}'
+          : '${started.day}/${started.month}';
     }
 
     // 2. Mood untuk sesi-sesi tersebut.
@@ -82,6 +100,10 @@ class AnalyticsRepository {
     // Akumulator per topik per parameter.
     final topicParamSum = <String, Map<String, int>>{};
     final topicParamCount = <String, Map<String, int>>{};
+    // Akumulator tren fokus per bucket waktu.
+    final bucketFokusSum = <int, int>{};
+    final bucketFokusCount = <int, int>{};
+    final bucketSessions = <int, Set<String>>{};
 
     for (final row in moodRows) {
       final paramName =
@@ -92,12 +114,30 @@ class AnalyticsRepository {
       paramSum[paramName] = (paramSum[paramName] ?? 0) + score;
       paramCount[paramName] = (paramCount[paramName] ?? 0) + 1;
 
-      final topic = sessionTopic[row['session_id'] as String] ?? '(?)';
+      final sessionId = row['session_id'] as String;
+      final topic = sessionTopic[sessionId] ?? '(?)';
       (topicParamSum[topic] ??= {})[paramName] =
           ((topicParamSum[topic] ??= {})[paramName] ?? 0) + score;
       (topicParamCount[topic] ??= {})[paramName] =
           ((topicParamCount[topic] ??= {})[paramName] ?? 0) + 1;
+
+      if (paramName == 'fokus') {
+        final key = sessionBucketKey[sessionId];
+        if (key != null) {
+          bucketFokusSum[key] = (bucketFokusSum[key] ?? 0) + score;
+          bucketFokusCount[key] = (bucketFokusCount[key] ?? 0) + 1;
+          (bucketSessions[key] ??= {}).add(sessionId);
+        }
+      }
     }
+
+    final moodTrend = (bucketFokusSum.keys.toList()..sort())
+        .map((k) => MoodTrendPoint(
+              label: bucketLabel[k] ?? '$k',
+              fokus: bucketFokusSum[k]! / bucketFokusCount[k]!,
+              sessionCount: bucketSessions[k]?.length ?? 0,
+            ))
+        .toList();
 
     final avgByParameter = <String, double>{
       for (final p in paramSum.keys) p: paramSum[p]! / paramCount[p]!,
@@ -126,6 +166,8 @@ class AnalyticsRepository {
       averageMoodByParameter: avgByParameter,
       topicMoodAverages: topicAverages,
       sessionsByTimeOfDay: byTimeOfDay,
+      minutesByTopic: minutesByTopic,
+      moodTrend: moodTrend,
     );
   }
 }

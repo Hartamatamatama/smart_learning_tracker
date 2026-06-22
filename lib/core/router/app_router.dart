@@ -6,6 +6,8 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/ai_report/screens/ai_report_history_screen.dart';
+import '../../features/ai_report/screens/ai_report_screen.dart';
 import '../../features/history/models/session_history_item.dart';
 import '../../features/history/screens/history_screen.dart';
 import '../../features/history/screens/session_detail_screen.dart';
@@ -29,6 +31,8 @@ abstract class AppRoutes {
   static const moodJournal = '/mood-journal';
   static const history = '/history';
   static const sessionDetail = '/session-detail';
+  static const aiReport = '/ai-report';
+  static const aiReportHistory = '/ai-report-history';
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +105,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.extra is SessionHistoryItem ? null : AppRoutes.history,
         builder: (_, state) =>
             SessionDetailScreen(item: state.extra as SessionHistoryItem),
+      ),
+      GoRoute(
+        path: AppRoutes.aiReport,
+        // extra == true → langsung generate (dari banner reminder).
+        builder: (_, state) =>
+            AiReportScreen(autoGenerate: state.extra == true),
+      ),
+      GoRoute(
+        path: AppRoutes.aiReportHistory,
+        builder: (_, __) => const AiReportHistoryScreen(),
       ),
     ],
   );
