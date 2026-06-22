@@ -42,4 +42,14 @@ enum SessionStatus {
         SessionStatus.completed => 'completed',
         SessionStatus.stoppedEarly => 'stopped_early',
       };
+
+  String get label => switch (this) {
+        SessionStatus.completed => 'Selesai',
+        SessionStatus.stoppedEarly => 'Dihentikan',
+      };
+
+  /// Petakan dari nilai DB. Nilai legacy ('cancelled'/'in_progress')
+  /// diperlakukan sebagai dihentikan lebih awal.
+  static SessionStatus fromDb(String value) =>
+      value == 'completed' ? SessionStatus.completed : SessionStatus.stoppedEarly;
 }

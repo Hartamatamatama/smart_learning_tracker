@@ -68,12 +68,13 @@ class HomeScreen extends ConsumerWidget {
                       color: Color(0xFF7B61FF),
                       enabled: false,
                     ),
-                    const _MenuCard(
+                    _MenuCard(
                       icon: Icons.history_rounded,
                       label: 'Riwayat',
                       description: 'Lihat sesi lalu',
-                      color: Color(0xFF3CB371),
-                      enabled: false,
+                      color: const Color(0xFF3CB371),
+                      enabled: true,
+                      onTap: () => context.go(AppRoutes.history),
                     ),
                     const _MenuCard(
                       icon: Icons.insights_rounded,

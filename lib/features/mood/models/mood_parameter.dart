@@ -30,7 +30,10 @@ class MoodParameter {
   final int sortOrder;
 
   /// Label tampilan yang ramah (judul kartu di form jurnal).
-  String get displayLabel => switch (name) {
+  String get displayLabel => displayLabelFor(name);
+
+  /// Versi statis — dipakai saat hanya punya nama parameter (mis. di repo).
+  static String displayLabelFor(String name) => switch (name) {
         'mood_umum' => 'Mood Umum',
         'fokus' => 'Fokus',
         'kelelahan' => 'Kelelahan',

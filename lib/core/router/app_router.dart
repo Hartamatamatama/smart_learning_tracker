@@ -6,6 +6,9 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/history/models/session_history_item.dart';
+import '../../features/history/screens/history_screen.dart';
+import '../../features/history/screens/session_detail_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/mood/screens/mood_journal_screen.dart';
 import '../../features/timer/providers/timer_state.dart';
@@ -24,6 +27,8 @@ abstract class AppRoutes {
   static const timerSetup = '/timer-setup';
   static const timerRun = '/timer-run';
   static const moodJournal = '/mood-journal';
+  static const history = '/history';
+  static const sessionDetail = '/session-detail';
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +89,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.extra is MoodNavRequest ? null : AppRoutes.home,
         builder: (_, state) =>
             MoodJournalScreen(request: state.extra as MoodNavRequest),
+      ),
+      GoRoute(
+        path: AppRoutes.history,
+        builder: (_, __) => const HistoryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.sessionDetail,
+        // Butuh SessionHistoryItem via extra; jika tidak ada, kembali ke list.
+        redirect: (_, state) =>
+            state.extra is SessionHistoryItem ? null : AppRoutes.history,
+        builder: (_, state) =>
+            SessionDetailScreen(item: state.extra as SessionHistoryItem),
       ),
     ],
   );
