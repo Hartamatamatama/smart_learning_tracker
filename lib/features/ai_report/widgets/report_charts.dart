@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../analytics/models/study_analytics_summary.dart';
 
 /// Tiga grafik ringkasan untuk laporan: menit/topik (bar), tren fokus (line),
@@ -246,20 +247,20 @@ class _CompletionChart extends StatelessWidget {
                 PieChartSectionData(
                   value: c.toDouble(),
                   title: '${(c / total * 100).round()}%',
-                  color: Colors.green,
+                  color: AppColors.success,
                   radius: 46,
                   titleStyle: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 12),
                 ),
                 PieChartSectionData(
                   value: s.toDouble(),
                   title: '${(s / total * 100).round()}%',
-                  color: Colors.orange,
+                  color: AppColors.warning,
                   radius: 46,
                   titleStyle: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 12),
                 ),
@@ -271,9 +272,9 @@ class _CompletionChart extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _Legend(color: Colors.green, label: 'Selesai', value: c),
+            _Legend(color: AppColors.success, label: 'Selesai', value: c),
             const SizedBox(height: 10),
-            _Legend(color: Colors.orange, label: 'Dihentikan', value: s),
+            _Legend(color: AppColors.warning, label: 'Dihentikan', value: s),
           ],
         ),
         const SizedBox(width: 8),

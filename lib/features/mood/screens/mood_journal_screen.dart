@@ -170,7 +170,7 @@ class _MoodJournalScreenState extends ConsumerState<MoodJournalScreen> {
         padding: const EdgeInsets.all(24),
         children: [
           const SizedBox(height: 4),
-          Icon(Icons.favorite_outline, size: 44, color: theme.colorScheme.primary),
+          Icon(Icons.favorite_outline, size: 44, color: theme.colorScheme.secondary),
           const SizedBox(height: 14),
           Text(
             'Bagaimana sesi belajar "${req.topicName}"?',
@@ -264,7 +264,7 @@ class _MoodJournalScreenState extends ConsumerState<MoodJournalScreen> {
       children: [
         const SizedBox(height: 8),
         Icon(Icons.celebration_outlined,
-            size: 56, color: theme.colorScheme.primary),
+            size: 56, color: theme.colorScheme.secondary),
         const SizedBox(height: 16),
         Text(
           _motivational,
@@ -336,7 +336,7 @@ class _MoodJournalScreenState extends ConsumerState<MoodJournalScreen> {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        Icon(icon, size: 20, color: theme.colorScheme.secondary),
         const SizedBox(width: 12),
         Text(label,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -381,7 +381,7 @@ class _ParameterCard extends StatelessWidget {
         border: Border.all(
           color: value == null
               ? theme.colorScheme.outline.withValues(alpha: 0.3)
-              : theme.colorScheme.primary.withValues(alpha: 0.6),
+              : theme.colorScheme.secondary.withValues(alpha: 0.6),
         ),
       ),
       child: Column(
@@ -416,7 +416,7 @@ class _ParameterCard extends StatelessWidget {
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: selected
-                              ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                              ? theme.colorScheme.secondary.withValues(alpha: 0.18)
                               : Colors.transparent,
                           shape: BoxShape.circle,
                         ),
@@ -424,7 +424,7 @@ class _ParameterCard extends StatelessWidget {
                           icon,
                           size: 30,
                           color: selected
-                              ? theme.colorScheme.primary
+                              ? theme.colorScheme.secondary
                               : theme.colorScheme.onSurface
                                   .withValues(alpha: 0.45),
                         ),
@@ -434,7 +434,7 @@ class _ParameterCard extends StatelessWidget {
                         label,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: selected
-                              ? theme.colorScheme.primary
+                              ? theme.colorScheme.secondary
                               : theme.colorScheme.onSurface
                                   .withValues(alpha: 0.5),
                           fontWeight:
@@ -471,7 +471,7 @@ class _ScoreDots extends StatelessWidget {
             filled ? Icons.circle : Icons.circle_outlined,
             size: 12,
             color: filled
-                ? theme.colorScheme.primary
+                ? theme.colorScheme.secondary
                 : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         );

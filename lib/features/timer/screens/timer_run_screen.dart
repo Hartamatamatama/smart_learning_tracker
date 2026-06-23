@@ -9,6 +9,7 @@ import '../../ambient_sound/providers/ambient_player_controller.dart';
 import '../models/timer_enums.dart';
 import '../providers/timer_controller.dart';
 import '../providers/timer_state.dart';
+import '../widgets/timer_ring.dart';
 
 class TimerRunScreen extends ConsumerStatefulWidget {
   const TimerRunScreen({super.key});
@@ -198,50 +199,42 @@ class _TimerRunScreenState extends ConsumerState<TimerRunScreen>
                 ),
                 const SizedBox(height: 36),
 
-                // Lingkaran timer
-                SizedBox(
-                  width: 240,
-                  height: 240,
-                  child: Stack(
-                    alignment: Alignment.center,
+                // Signature: cincin timer dengan glow
+                TimerRing(
+                  size: 272,
+                  color: isBreak
+                      ? theme.colorScheme.tertiary
+                      : theme.colorScheme.primary,
+                  trackColor:
+                      theme.colorScheme.outline.withValues(alpha: 0.6),
+                  // Pomodoro: fraksi SISA (ring menyusut saat waktu berkurang).
+                  progress: isStopwatch ? null : (1 - state.progress),
+                  isStopwatch: isStopwatch,
+                  active: state.status == TimerRunStatus.running &&
+                      !state.isPaused,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        width: 240,
-                        height: 240,
-                        child: CircularProgressIndicator(
-                          value: isStopwatch ? null : state.progress,
-                          strokeWidth: 12,
-                          backgroundColor:
-                              theme.colorScheme.outline.withValues(alpha: 0.2),
-                          strokeCap: StrokeCap.round,
+                      Text(
+                        DurationFormatter.fromSeconds(displaySeconds),
+                        style: theme.textTheme.displayLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1,
                         ),
                       ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            DurationFormatter.fromSeconds(displaySeconds),
-                            style: theme.textTheme.displayMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontFeatures: const [],
-                            ),
-                          ),
-                          if (state.isPaused)
-                            Text(
-                              'Dijeda',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            )
-                          else
-                            Text(
-                              isStopwatch ? 'berjalan' : 'tersisa',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.6),
-                              ),
-                            ),
-                        ],
+                      const SizedBox(height: 2),
+                      Text(
+                        state.isPaused
+                            ? 'DIJEDA'
+                            : (isStopwatch ? 'BERJALAN' : 'TERSISA'),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: state.isPaused
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.55),
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -272,7 +265,7 @@ class _TimerRunScreenState extends ConsumerState<TimerRunScreen>
                       _ControlButton(
                         icon: Icons.pause,
                         label: 'Jeda',
-                        color: theme.colorScheme.secondary,
+                        color: theme.colorScheme.onSurfaceVariant,
                         onTap: () =>
                             ref.read(timerControllerProvider.notifier).pause(),
                       ),

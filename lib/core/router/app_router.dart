@@ -79,7 +79,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.timerSetup,
-        builder: (_, __) => const TimerSetupScreen(),
+        pageBuilder: (_, __) => _fade(const TimerSetupScreen()),
       ),
       GoRoute(
         path: AppRoutes.timerRun,
@@ -96,29 +96,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.history,
-        builder: (_, __) => const HistoryScreen(),
+        pageBuilder: (_, __) => _fade(const HistoryScreen()),
       ),
       GoRoute(
         path: AppRoutes.sessionDetail,
         // Butuh SessionHistoryItem via extra; jika tidak ada, kembali ke list.
         redirect: (_, state) =>
             state.extra is SessionHistoryItem ? null : AppRoutes.history,
-        builder: (_, state) =>
-            SessionDetailScreen(item: state.extra as SessionHistoryItem),
+        pageBuilder: (_, state) =>
+            _fade(SessionDetailScreen(item: state.extra as SessionHistoryItem)),
       ),
       GoRoute(
         path: AppRoutes.aiReport,
         // extra == true → langsung generate (dari banner reminder).
-        builder: (_, state) =>
-            AiReportScreen(autoGenerate: state.extra == true),
+        pageBuilder: (_, state) =>
+            _fade(AiReportScreen(autoGenerate: state.extra == true)),
       ),
       GoRoute(
         path: AppRoutes.aiReportHistory,
-        builder: (_, __) => const AiReportHistoryScreen(),
+        pageBuilder: (_, __) => _fade(const AiReportHistoryScreen()),
       ),
     ],
   );
 });
+
+/// Transisi fade halus untuk navigasi antar screen fitur.
+CustomTransitionPage<void> _fade(Widget child) => CustomTransitionPage<void>(
+      child: child,
+      transitionDuration: const Duration(milliseconds: 220),
+      reverseTransitionDuration: const Duration(milliseconds: 170),
+      transitionsBuilder: (_, animation, __, c) =>
+          FadeTransition(opacity: animation, child: c),
+    );
 
 String? _redirect(AppAuthState authState, String location) {
   final isAuthScreen =

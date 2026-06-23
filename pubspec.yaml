@@ -79,6 +79,9 @@ dependencies:
   # jadi tidak perlu flutter_local_notifications terpisah.
   flutter_foreground_task: ^8.17.0
 
+  # Font display (Space Grotesk) & body (Inter) untuk konsep "Focus Ritual".
+  google_fonts: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

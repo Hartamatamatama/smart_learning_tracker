@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../ai_report/providers/weekly_reminder_provider.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/models/user_profile.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -12,7 +13,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final profile = ref.watch(currentUserProfileProvider);
 
     return Scaffold(
@@ -20,6 +20,13 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Smart Learning Tracker'),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: Icon(ref.watch(themeModeProvider) == ThemeMode.dark
+                ? Icons.light_mode_outlined
+                : Icons.dark_mode_outlined),
+            tooltip: 'Ganti tema',
+            onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Keluar',
@@ -41,55 +48,38 @@ class HomeScreen extends ConsumerWidget {
               const _WeeklyReminderBanner(),
 
               const SizedBox(height: 12),
-              Text(
-                'Menu',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
+              _SectionLabel('MENU'),
               const SizedBox(height: 12),
 
-              // Menu items
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 1.1,
-                  children: [
-                    // push (bukan go) agar tombol back fisik kembali ke Home,
-                    // bukan keluar dari app.
-                    _MenuCard(
-                      icon: Icons.timer_outlined,
-                      label: 'Timer Belajar',
-                      description: 'Mulai sesi belajar',
-                      color: const Color(0xFF4A90D9),
-                      enabled: true,
-                      onTap: () => context.push(AppRoutes.timerSetup),
-                    ),
-                    // Catatan: Ambient Sound BUKAN menu berdiri sendiri —
-                    // sudah terintegrasi di alur Timer (pilih saat setup,
-                    // kontrol play/mute saat sesi berjalan).
-                    _MenuCard(
+              // Hero: Timer adalah aksi utama → paling prominent.
+              // push (bukan go) agar back fisik kembali ke Home.
+              _HeroTimerCard(onTap: () => context.push(AppRoutes.timerSetup)),
+              const SizedBox(height: 14),
+
+              // Catatan: Ambient Sound BUKAN menu berdiri sendiri — sudah
+              // terintegrasi di alur Timer (pilih saat setup, kontrol saat sesi).
+              Row(
+                children: [
+                  Expanded(
+                    child: _MenuCard(
                       icon: Icons.history_rounded,
                       label: 'Riwayat',
                       description: 'Lihat sesi lalu',
-                      color: const Color(0xFF3CB371),
-                      enabled: true,
                       onTap: () => context.push(AppRoutes.history),
                     ),
-                    _MenuCard(
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _MenuCard(
                       icon: Icons.insights_rounded,
                       label: 'Analyze Ourself',
-                      description: 'Laporan AI performa',
-                      color: const Color(0xFFE07B39),
-                      enabled: true,
+                      description: 'Laporan AI',
                       onTap: () => context.push(AppRoutes.aiReport),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              const Spacer(),
             ],
           ),
         ),
@@ -181,6 +171,23 @@ class _WeeklyReminderBanner extends ConsumerWidget {
   }
 }
 
+/// Label kategori (eyebrow) — huruf kapital kecil dengan tracking lebar.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            letterSpacing: 2.5,
+            fontWeight: FontWeight.w700,
+          ),
+    );
+  }
+}
+
 class _GreetingCard extends StatelessWidget {
   const _GreetingCard({this.profile});
   final UserProfile? profile;
@@ -200,41 +207,106 @@ class _GreetingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.colorScheme.outline),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            '$_greeting,',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
+          // Aksen lime tipis (sentuhan brand, bukan gradient berlebihan)
+          Container(
+            width: 4,
+            height: 54,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            profile?.displayName ?? 'Pelajar',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Apa yang ingin kamu pelajari hari ini?',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.8),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$_greeting,',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )),
+                const SizedBox(height: 2),
+                Text(profile?.displayName ?? 'Pelajar',
+                    style: theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text('Apa yang ingin kamu pelajari hari ini?',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Kartu hero Timer — aksi utama, paling menonjol (aksen lime).
+class _HeroTimerCard extends StatelessWidget {
+  const _HeroTimerCard({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primary.withValues(alpha: 0.45)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primary.withValues(alpha: 0.16),
+                theme.colorScheme.surface,
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
+                child: Icon(Icons.play_arrow_rounded,
+                    color: theme.colorScheme.onPrimary, size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Timer Belajar',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text('Mulai sesi fokus atau stopwatch',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        )),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right,
+                  color: theme.colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -245,60 +317,51 @@ class _MenuCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.description,
-    required this.color,
-    required this.enabled,
-    this.onTap,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final String description;
-  final Color color;
-  final bool enabled;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.5,
-      child: Card(
-        elevation: 0,
-        color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-        ),
+    return AspectRatio(
+      aspectRatio: 1.05,
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: enabled ? onTap : null,
-          child: Padding(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: theme.colorScheme.outline),
+            ),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 24),
+                  child: Icon(icon, color: theme.colorScheme.primary, size: 22),
                 ),
                 const Spacer(),
-                Text(
-                  label,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(label,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(
-                  enabled ? description : 'Segera hadir',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                  ),
-                ),
+                Text(description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )),
               ],
             ),
           ),
