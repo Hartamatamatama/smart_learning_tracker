@@ -19,25 +19,35 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
   await SupabaseConfig.initialize();
 
-  // Port komunikasi antara isolate UI dan foreground service timer.
-  // Hanya relevan di platform native (bukan Web).
+  // Inisialisasi layanan native NON-ESENSIAL (port foreground service,
+  // timezone, notifikasi pengingat). Hanya relevan di platform native.
+  //
+  // FIX Fase 9: SELURUH blok dibungkus try/catch. Kegagalan di sini TIDAK BOLEH
+  // mencegah app boot ke UI. Bug sebelumnya: di APK release, resource icon
+  // notifikasi tidak ditemukan → ReminderService.init() melempar
+  // PlatformException yang tidak tertangkap → main() berhenti sebelum runApp()
+  // → app stuck di splash. Timer & fitur lain tetap jalan walau init ini gagal.
   if (!kIsWeb) {
-    FlutterForegroundTask.initCommunicationPort();
-
-    // Timezone untuk penjadwalan pengingat yang akurat (zonedSchedule).
-    tzdata.initializeTimeZones();
     try {
-      final tzName = (await FlutterTimezone.getLocalTimezone()).identifier;
-      tz.setLocalLocation(tz.getLocation(tzName));
-    } catch (_) {
-      // Gagal deteksi zona → biarkan default (UTC). Penjadwalan tetap jalan,
-      // hanya jamnya bisa bergeser; jarang terjadi.
-    }
+      FlutterForegroundTask.initCommunicationPort();
 
-    // Notifikasi pengingat belajar: tap → buka Timer Setup lewat router global.
-    ReminderService.instance.onSelectOpenTimer =
-        () => rootRouter?.push(AppRoutes.timerSetup);
-    await ReminderService.instance.init();
+      // Timezone untuk penjadwalan pengingat yang akurat (zonedSchedule).
+      tzdata.initializeTimeZones();
+      try {
+        final tzName = (await FlutterTimezone.getLocalTimezone()).identifier;
+        tz.setLocalLocation(tz.getLocation(tzName));
+      } catch (_) {
+        // Gagal deteksi zona → biarkan default (UTC).
+      }
+
+      // Notifikasi pengingat belajar: tap → buka Timer Setup lewat router global.
+      ReminderService.instance.onSelectOpenTimer =
+          () => rootRouter?.push(AppRoutes.timerSetup);
+      await ReminderService.instance.init();
+    } catch (e, st) {
+      // Jangan blok boot. Log saja (tidak ditelan diam-diam).
+      debugPrint('Init layanan native gagal, dilewati: $e\n$st');
+    }
   }
 
   runApp(

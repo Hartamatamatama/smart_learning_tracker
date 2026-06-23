@@ -64,6 +64,15 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 
+        <!-- FIX Fase 9: drawable ikon notifikasi (ic_stat_notification) hanya
+             dirujuk via nama string dari Dart (flutter_local_notifications), jadi
+             di build RELEASE bisa tidak ikut ter-bundle → init notifikasi crash →
+             app stuck di splash. meta-data ini merujuknya secara STATIS supaya
+             resource dijamin tetap ada di APK release. -->
+        <meta-data
+            android:name="slt.keep.notification_icon"
+            android:resource="@drawable/ic_stat_notification" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
