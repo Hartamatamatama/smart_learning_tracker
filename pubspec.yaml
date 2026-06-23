@@ -104,6 +104,21 @@ dev_dependencies:
   riverpod_generator: ^2.6.5
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.5
+  flutter_launcher_icons: ^0.14.4
+
+# Konfigurasi flutter_launcher_icons (Fase 9). Sumber satu PNG gabungan
+# (dasar gelap gradien near-black + ring lime "Focus Ritual"). Ring sudah
+# inset dari tepi, jadi aman dipakai sebagai foreground adaptive penuh tanpa
+# terpotong; background adaptive #0E0F11 menyatu dengan dasar gelap logo.
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#0E0F11"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

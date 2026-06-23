@@ -23,7 +23,7 @@
     <!-- TODO: Fase akhir - App Lock overlay (butuh SYSTEM_ALERT_WINDOW + Usage Access permission) -->
 
     <application
-        android:label="smart_learning_tracker"
+        android:label="Smart Learning Tracker"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

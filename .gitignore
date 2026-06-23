@@ -49,6 +49,12 @@ app.*.map.json
 .env.local
 .env.*.local
 
+# Android signing — NEVER commit keystore atau password (Fase 9)
+*.jks
+*.keystore
+key.properties
+**/key.properties
+
 # Supabase local dev (if used)
 supabase/.temp/
 supabase/functions/node_modules/

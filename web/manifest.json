@@ -1,11 +1,11 @@
 {
-    "name": "smart_learning_tracker",
-    "short_name": "smart_learning_tracker",
+    "name": "Smart Learning Tracker",
+    "short_name": "Learning Tracker",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0E0F11",
+    "theme_color": "#0E0F11",
+    "description": "Pelacak belajar dengan timer, ambient sound, jurnal mood, dan analisis AI.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
