@@ -58,28 +58,26 @@ class HomeScreen extends ConsumerWidget {
                   crossAxisSpacing: 14,
                   childAspectRatio: 1.1,
                   children: [
+                    // push (bukan go) agar tombol back fisik kembali ke Home,
+                    // bukan keluar dari app.
                     _MenuCard(
                       icon: Icons.timer_outlined,
                       label: 'Timer Belajar',
                       description: 'Mulai sesi belajar',
                       color: const Color(0xFF4A90D9),
                       enabled: true,
-                      onTap: () => context.go(AppRoutes.timerSetup),
+                      onTap: () => context.push(AppRoutes.timerSetup),
                     ),
-                    const _MenuCard(
-                      icon: Icons.music_note_outlined,
-                      label: 'Ambient Sound',
-                      description: 'Suara latar belajar',
-                      color: Color(0xFF7B61FF),
-                      enabled: false,
-                    ),
+                    // Catatan: Ambient Sound BUKAN menu berdiri sendiri —
+                    // sudah terintegrasi di alur Timer (pilih saat setup,
+                    // kontrol play/mute saat sesi berjalan).
                     _MenuCard(
                       icon: Icons.history_rounded,
                       label: 'Riwayat',
                       description: 'Lihat sesi lalu',
                       color: const Color(0xFF3CB371),
                       enabled: true,
-                      onTap: () => context.go(AppRoutes.history),
+                      onTap: () => context.push(AppRoutes.history),
                     ),
                     _MenuCard(
                       icon: Icons.insights_rounded,
@@ -87,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
                       description: 'Laporan AI performa',
                       color: const Color(0xFFE07B39),
                       enabled: true,
-                      onTap: () => context.go(AppRoutes.aiReport),
+                      onTap: () => context.push(AppRoutes.aiReport),
                     ),
                   ],
                 ),
@@ -146,7 +144,7 @@ class _WeeklyReminderBanner extends ConsumerWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => context.go(AppRoutes.aiReport, extra: true),
+          onTap: () => context.push(AppRoutes.aiReport, extra: true),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
             child: Row(

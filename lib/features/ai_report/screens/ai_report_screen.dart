@@ -42,7 +42,9 @@ class _AiReportScreenState extends ConsumerState<AiReportScreen> {
         title: const Text('Analyze Ourself'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(AppRoutes.home),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.home),
         ),
         actions: [
           IconButton(

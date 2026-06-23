@@ -23,7 +23,9 @@ class HistoryScreen extends ConsumerWidget {
         title: const Text('Riwayat Belajar'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(AppRoutes.home),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.home),
         ),
         actions: [
           IconButton(
@@ -83,7 +85,7 @@ class HistoryScreen extends ConsumerWidget {
                           message:
                               'Kamu belum menyelesaikan sesi belajar.\nYuk mulai sesi pertamamu!',
                           action: FilledButton.icon(
-                            onPressed: () => context.go(AppRoutes.timerSetup),
+                            onPressed: () => context.push(AppRoutes.timerSetup),
                             icon: const Icon(Icons.play_arrow),
                             label: const Text('Mulai Belajar'),
                           ),
