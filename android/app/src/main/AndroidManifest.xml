@@ -7,6 +7,10 @@
     <!-- Agar countdown tetap akurat saat layar dikunci -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Simpan PDF ke folder Downloads publik (hanya Android ≤ 9; di Android 10+
+         pakai folder app/Share Sheet karena scoped storage). -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <!-- TODO: Fase akhir - App Lock overlay (butuh SYSTEM_ALERT_WINDOW + Usage Access permission) -->
 

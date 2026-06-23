@@ -82,6 +82,12 @@ dependencies:
   # Font display (Space Grotesk) & body (Inter) untuk konsep "Focus Ritual".
   google_fonts: ^6.2.1
 
+  # Export laporan AI ke PDF.
+  pdf: ^3.11.1               # generate dokumen PDF
+  printing: ^5.13.4          # preview/print utilities (komplementer pdf)
+  path_provider: ^2.1.5      # lokasi penyimpanan file (eksplisit; sblm langsung)
+  share_plus: ^10.1.4        # share PDF ke aplikasi lain (WA/Email/Drive)
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

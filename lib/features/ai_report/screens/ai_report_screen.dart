@@ -1,10 +1,17 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/ai_evaluation.dart';
 import '../providers/ai_report_controller.dart';
+import '../services/pdf_export_service.dart';
 import '../widgets/markdown_text.dart';
 import '../widgets/report_charts.dart';
 
@@ -201,86 +208,217 @@ class _GeneratingView extends StatelessWidget {
   }
 }
 
-class _ResultView extends StatelessWidget {
+class _ResultView extends ConsumerStatefulWidget {
   const _ResultView({required this.report, required this.onNew});
 
   final AiEvaluation report;
   final VoidCallback onNew;
 
   @override
+  ConsumerState<_ResultView> createState() => _ResultViewState();
+}
+
+class _ResultViewState extends ConsumerState<_ResultView> {
+  // Key untuk capture tiap grafik dari layer tersembunyi.
+  final _barKey = GlobalKey();
+  final _lineKey = GlobalKey();
+  final _pieKey = GlobalKey();
+  bool _exporting = false;
+
+  AiEvaluation get report => widget.report;
+
+  Future<Uint8List?> _captureKey(GlobalKey key) async {
+    final ctx = key.currentContext;
+    final boundary = ctx?.findRenderObject();
+    if (boundary is! RenderRepaintBoundary) return null;
+    final image = await boundary.toImage(pixelRatio: 3);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List();
+  }
+
+  Future<List<Uint8List>> _captureCharts() async {
+    // Pastikan layer capture sudah selesai dirender.
+    await WidgetsBinding.instance.endOfFrame;
+    final out = <Uint8List>[];
+    for (final k in [_barKey, _lineKey, _pieKey]) {
+      final bytes = await _captureKey(k);
+      if (bytes != null) out.add(bytes);
+    }
+    return out;
+  }
+
+  Future<void> _export({required bool share}) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final charts =
+          report.summary != null ? await _captureCharts() : <Uint8List>[];
+      final userName =
+          ref.read(currentUserProfileProvider)?.displayName ?? 'Pengguna';
+      final bytes = await PdfExportService.generateReportPdf(
+        evaluation: report,
+        chartImages: charts,
+        userName: userName,
+      );
+      final filename = PdfExportService.fileName(report);
+      if (share) {
+        await PdfExportService.sharePdf(bytes, filename);
+      } else {
+        final path = await PdfExportService.savePdf(bytes, filename);
+        _snack('PDF tersimpan di:\n$path');
+      }
+    } catch (_) {
+      _snack('Gagal membuat PDF. Coba lagi sebentar.');
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final summary = report.summary;
 
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    return Stack(
       children: [
-        // Header laporan
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              theme.colorScheme.primary,
-              theme.colorScheme.secondary,
-            ]),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Laporan ${report.periodDays} Hari Terakhir',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(
-                'Dibuat ${_fmt(report.generatedAt)} • '
-                '${report.sessionCount} sesi • ${report.totalMinutes} menit',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: Colors.white.withValues(alpha: 0.85)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // 1) Analisis AI (deliverable utama "Analyze Ourself")
-        Text('Analisis AI',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        if (report.reportMarkdown != null)
-          MarkdownText(report.reportMarkdown!)
-        else
-          const Text('(Tidak ada teks analisis.)'),
-        const SizedBox(height: 28),
-
-        // 2) Ringkasan visual sebagai bukti pendukung
-        Text('Ringkasan Visual',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
+        // Layer capture grafik: dirender (agar bisa toImage) tapi tertutup
+        // konten utama yang opaque, jadi tidak terlihat user.
         if (summary != null)
-          ReportCharts(summary: summary)
-        else
-          Text('Grafik tidak tersedia untuk laporan ini.',
-              style: theme.textTheme.bodySmall),
-        const SizedBox(height: 24),
-
-        if (report.modelUsed != null)
-          Text(
-            'Model: ${report.modelUsed}'
-            '${report.tokensUsed != null ? " • ${report.tokensUsed} token" : ""}',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: IgnorePointer(
+              child: ReportChartsCapture(
+                summary: summary,
+                barKey: _barKey,
+                lineKey: _lineKey,
+                pieKey: _pieKey,
+              ),
             ),
           ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: onNew,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Buat Laporan Baru'),
+        Positioned.fill(
+          child: Container(
+            color: theme.scaffoldBackgroundColor,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                // Header laporan
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                    ]),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Laporan ${report.periodDays} Hari Terakhir',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppColors.onLime,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Dibuat ${_fmt(report.generatedAt)} • '
+                        '${report.sessionCount} sesi • ${report.totalMinutes} menit',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.onLime.withValues(alpha: 0.9)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 1) Analisis AI
+                Text('Analisis AI',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (report.reportMarkdown != null)
+                  MarkdownText(report.reportMarkdown!)
+                else
+                  const Text('(Tidak ada teks analisis.)'),
+                const SizedBox(height: 28),
+
+                // 2) Ringkasan visual
+                Text('Ringkasan Visual',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                if (summary != null)
+                  ReportCharts(summary: summary)
+                else
+                  Text('Grafik tidak tersedia untuk laporan ini.',
+                      style: theme.textTheme.bodySmall),
+                const SizedBox(height: 24),
+
+                // Tombol export PDF
+                if (_exporting)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2)),
+                        const SizedBox(width: 12),
+                        Text('Menyiapkan PDF…',
+                            style: theme.textTheme.bodyMedium),
+                      ],
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _export(share: true),
+                          icon: const Icon(Icons.ios_share, size: 18),
+                          label: const Text('Bagikan'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _export(share: false),
+                          icon: const Icon(Icons.download_outlined, size: 18),
+                          label: const Text('Simpan PDF'),
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 18),
+
+                if (report.modelUsed != null)
+                  Text(
+                    'Model: ${report.modelUsed}'
+                    '${report.tokensUsed != null ? " • ${report.tokensUsed} token" : ""}',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: widget.onNew,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Buat Laporan Baru'),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../analytics/models/study_analytics_summary.dart';
 
 /// Tiga grafik ringkasan untuk laporan: menit/topik (bar), tren fokus (line),
@@ -318,6 +319,52 @@ class _NoData extends StatelessWidget {
                 color:
                     Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               )),
+    );
+  }
+}
+
+/// Layout 3 grafik untuk DI-CAPTURE jadi gambar PDF.
+/// Dipaksa tema TERANG + latar putih agar menyatu dengan halaman PDF putih,
+/// masing-masing grafik dibungkus RepaintBoundary terpisah (via key).
+class ReportChartsCapture extends StatelessWidget {
+  const ReportChartsCapture({
+    super.key,
+    required this.summary,
+    required this.barKey,
+    required this.lineKey,
+    required this.pieKey,
+  });
+
+  final StudyAnalyticsSummary summary;
+  final GlobalKey barKey;
+  final GlobalKey lineKey;
+  final GlobalKey pieKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppTheme.light,
+      child: Builder(
+        builder: (ctx) {
+          Widget cap(GlobalKey key, Widget chart) => RepaintBoundary(
+                key: key,
+                child: Container(
+                  width: 380,
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                  child: SizedBox(height: 200, child: chart),
+                ),
+              );
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              cap(barKey, _MinutesByTopicChart(summary: summary)),
+              cap(lineKey, _FokusTrendChart(summary: summary)),
+              cap(pieKey, _CompletionChart(summary: summary)),
+            ],
+          );
+        },
+      ),
     );
   }
 }
