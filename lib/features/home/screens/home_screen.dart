@@ -4,15 +4,39 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../ai_report/providers/weekly_reminder_provider.dart';
+import '../../reminders/providers/reminder_provider.dart';
+import '../../reminders/services/reminder_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/models/user_profile.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Setelah frame pertama: sesuaikan jadwal pengingat untuk sisa hari ini
+    // (jadwalkan jika belum belajar, batalkan jika sudah), dan jika app dibuka
+    // dari TAP notifikasi pengingat (cold start) → buka Timer Setup.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onReady());
+  }
+
+  Future<void> _onReady() async {
+    await ref.read(reminderControllerProvider.notifier).reconcileToday();
+    if (!mounted) return;
+    if (await ReminderService.instance.launchedFromReminder() && mounted) {
+      context.push(AppRoutes.timerSetup);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(currentUserProfileProvider);
 
     return Scaffold(
@@ -28,9 +52,14 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
           IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Pengaturan',
+            onPressed: () => context.push(AppRoutes.settings),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Keluar',
-            onPressed: () => _confirmLogout(context, ref),
+            onPressed: () => _confirmLogout(context),
           ),
         ],
       ),
@@ -87,7 +116,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(

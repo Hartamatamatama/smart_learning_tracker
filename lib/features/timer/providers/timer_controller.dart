@@ -9,6 +9,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../ambient_sound/models/ambient_sound.dart';
 import '../../ambient_sound/providers/ambient_player_controller.dart';
 import '../../history/providers/history_controller.dart';
+import '../../reminders/providers/reminder_provider.dart';
 import '../models/study_session.dart';
 import '../models/timer_clock.dart';
 import '../models/timer_enums.dart';
@@ -275,6 +276,10 @@ class TimerController extends Notifier<TimerState> {
       // Sesi baru masuk ke study_sessions → segarkan Riwayat agar saat dibuka
       // menampilkan data terbaru (reset ke halaman 1 & filter kosong).
       ref.invalidate(historyControllerProvider);
+      // Sudah belajar hari ini → batalkan pengingat belajar sisa hari ini
+      // langsung (tanpa harus tutup-buka app). Fire-and-forget.
+      unawaited(
+          ref.read(reminderControllerProvider.notifier).reconcileToday());
       state = state.copyWith(
         status: TimerRunStatus.finished,
         elapsedSeconds: elapsed,
@@ -381,7 +386,16 @@ class TimerController extends Notifier<TimerState> {
         channelId: AppConstants.timerChannelId,
         channelName: AppConstants.timerChannelName,
         channelDescription: AppConstants.timerChannelDesc,
+        // FIX Fase 8: tanpa ini, default channelImportance = LOW → notifikasi
+        // tidak tampil di status bar / lock screen. HIGH = tampil di mana-mana
+        // (status bar, lock screen, sekali peek). priority HIGH untuk Android
+        // 7.1 ke bawah. visibility PUBLIC (default) agar terlihat di lock screen.
+        channelImportance: NotificationChannelImportance.HIGH,
+        priority: NotificationPriority.HIGH,
+        // onlyAlertOnce: HIGH membuat heads-up sekali saat sesi mulai, lalu
+        // update tiap detik tidak bunyi/bergetar lagi (tetap persisten).
         onlyAlertOnce: true,
+        visibility: NotificationVisibility.VISIBILITY_PUBLIC,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
         showNotification: false,
@@ -402,6 +416,16 @@ class TimerController extends Notifier<TimerState> {
         await FlutterForegroundTask.checkNotificationPermission();
     if (permission != NotificationPermission.granted) {
       await FlutterForegroundTask.requestNotificationPermission();
+    }
+    // FIX Fase 8: minta pengecualian battery optimization. Tanpa ini, Doze /
+    // manajemen baterai OEM (mis. Transsion/Infinix XOS) bisa membekukan
+    // foreground service & menyembunyikan notifikasi. Dialog sistem hanya
+    // muncul sekali bila app belum di-whitelist; jika sudah, langsung lewat.
+    // CATATAN: ini hanya menangani Doze standar Android — pengaturan baterai
+    // KHUSUS OEM (Autostart dll) tidak bisa diminta via API; lihat
+    // TROUBLESHOOTING_NOTIFICATIONS.md untuk langkah manual.
+    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
     }
   }
 

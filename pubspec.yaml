@@ -75,8 +75,9 @@ dependencies:
   # - Menjalankan callback di isolate khusus yang tetap hidup saat app
   #   di-background / layar dikunci, sehingga countdown tidak freeze.
   # - Maintenance aktif & API stabil untuk kasus timer.
-  # Reminder berkala digabung ke notifikasi yang sama (update message),
-  # jadi tidak perlu flutter_local_notifications terpisah.
+  # Reminder berkala SAAT SESI berjalan digabung ke notifikasi foreground yang
+  # sama (update message). Pengingat TERJADWAL (suruh mulai belajar) memakai
+  # flutter_local_notifications terpisah — lihat di bawah (Fase 8).
   flutter_foreground_task: ^8.17.0
 
   # Font display (Space Grotesk) & body (Inter) untuk konsep "Focus Ritual".
@@ -87,6 +88,12 @@ dependencies:
   printing: ^5.13.4          # preview/print utilities (komplementer pdf)
   path_provider: ^2.1.5      # lokasi penyimpanan file (eksplisit; sblm langsung)
   share_plus: ^10.1.4        # share PDF ke aplikasi lain (WA/Email/Drive)
+  # Pengingat belajar terjadwal (Fase 8): notifikasi lokal di jam yang diatur
+  # user. timezone untuk zonedSchedule yang akurat; flutter_timezone untuk
+  # mendeteksi nama zona waktu device (mis. Asia/Jakarta).
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.1
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:

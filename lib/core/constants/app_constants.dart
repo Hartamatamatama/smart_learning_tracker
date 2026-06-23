@@ -31,7 +31,13 @@ class AppConstants {
 
   // Foreground service / notifikasi
   static const int foregroundServiceId = 500;
-  static const String timerChannelId = 'study_timer_channel';
+  // PENTING: importance sebuah notification channel di Android BERSIFAT IMMUTABLE
+  // setelah channel pertama kali dibuat — ganti importance di kode TIDAK akan
+  // mengubah channel lama. Channel 'study_timer_channel' (v1) terlanjur dibuat
+  // dengan importance LOW (bug Fase 2: channelImportance tidak di-set), sehingga
+  // notifikasi tidak muncul di status bar / lock screen. Maka id di-bump ke v2
+  // agar channel BARU dibuat dengan importance HIGH.
+  static const String timerChannelId = 'study_timer_channel_v2';
   static const String timerChannelName = 'Timer Belajar';
   static const String timerChannelDesc =
       'Notifikasi persisten selama sesi belajar berlangsung.';

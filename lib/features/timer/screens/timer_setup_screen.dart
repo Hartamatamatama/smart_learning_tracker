@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/router/app_router.dart';
@@ -61,6 +63,37 @@ class _TimerSetupScreenState extends ConsumerState<TimerSetupScreen> {
     if (topic != null) setState(() => _topic = topic);
   }
 
+  /// Penjelasan kontekstual SEBELUM dialog izin sistem muncul (hanya sekali,
+  /// sebelum sesi pertama). Memberi alasan kenapa izin notifikasi + baterai
+  /// dibutuhkan sehingga user tidak kaget saat prompt sistem muncul.
+  Future<void> _maybeShowPermissionRationale() async {
+    if (kIsWeb) return;
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'timer_perm_rationale_shown';
+    if (prefs.getBool(key) ?? false) return;
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.notifications_active_outlined),
+        title: const Text('Izinkan notifikasi timer'),
+        content: const Text(
+          'Supaya timer tetap berjalan akurat di latar belakang dan kamu bisa '
+          'memantau / menjeda sesi langsung dari status bar & lock screen, '
+          'aplikasi butuh izin notifikasi dan pengecualian optimasi baterai.\n\n'
+          'Sebentar lagi akan muncul beberapa dialog izin — pilih "Izinkan".',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Mengerti'),
+          ),
+        ],
+      ),
+    );
+    await prefs.setBool(key, true);
+  }
+
   Future<void> _start() async {
     final topic = _topic;
     if (topic == null) return;
@@ -68,6 +101,8 @@ class _TimerSetupScreenState extends ConsumerState<TimerSetupScreen> {
         _parseMinutes(_focusCtrl.text) ?? AppConstants.defaultFocusMinutes;
     final brk =
         _parseMinutes(_breakCtrl.text) ?? AppConstants.defaultBreakMinutes;
+
+    await _maybeShowPermissionRationale();
 
     await ref
         .read(timerControllerProvider.notifier)

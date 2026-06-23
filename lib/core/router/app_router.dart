@@ -13,6 +13,7 @@ import '../../features/history/screens/history_screen.dart';
 import '../../features/history/screens/session_detail_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/mood/screens/mood_journal_screen.dart';
+import '../../features/reminders/screens/settings_screen.dart';
 import '../../features/timer/providers/timer_state.dart';
 import '../../features/timer/screens/timer_run_screen.dart';
 import '../../features/timer/screens/timer_setup_screen.dart';
@@ -33,7 +34,12 @@ abstract class AppRoutes {
   static const sessionDetail = '/session-detail';
   static const aiReport = '/ai-report';
   static const aiReportHistory = '/ai-report-history';
+  static const settings = '/settings';
 }
+
+/// Referensi global ke GoRouter aktif. Dipakai untuk navigasi dari LUAR widget
+/// tree — khususnya callback tap notifikasi pengingat (tanpa BuildContext).
+GoRouter? rootRouter;
 
 // ---------------------------------------------------------------------------
 // Router provider
@@ -54,7 +60,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   ref.onDispose(authListenable.dispose);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: authListenable,
     redirect: (BuildContext context, GoRouterState state) {
@@ -116,8 +122,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.aiReportHistory,
         pageBuilder: (_, __) => _fade(const AiReportHistoryScreen()),
       ),
+      GoRoute(
+        path: AppRoutes.settings,
+        pageBuilder: (_, __) => _fade(const SettingsScreen()),
+      ),
     ],
   );
+
+  rootRouter = router;
+  return router;
 });
 
 /// Transisi fade halus untuk navigasi antar screen fitur.

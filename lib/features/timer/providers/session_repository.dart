@@ -31,6 +31,22 @@ class SessionRepository {
     return user.id;
   }
 
+  /// Apakah user sudah punya minimal 1 sesi belajar HARI INI (zona waktu lokal)?
+  /// Dipakai logic reminder: kalau sudah belajar, reminder sisa hari dibatalkan.
+  /// started_at disimpan UTC, jadi bandingkan dengan tengah-malam lokal → UTC.
+  Future<bool> hasSessionToday() async {
+    final now = DateTime.now();
+    final localMidnightUtc =
+        DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
+    final rows = await SupabaseConfig.client
+        .from('study_sessions')
+        .select('id')
+        .eq('user_id', _userId)
+        .gte('started_at', localMidnightUtc)
+        .limit(1);
+    return (rows as List).isNotEmpty;
+  }
+
   /// Insert satu baris study_session, kembalikan id-nya.
   Future<String> insertSession(StudySession session) async {
     final inserted = await SupabaseConfig.client
