@@ -8,6 +8,7 @@ import '../../../config/supabase_config.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../ambient_sound/models/ambient_sound.dart';
 import '../../ambient_sound/providers/ambient_player_controller.dart';
+import '../../history/providers/history_controller.dart';
 import '../models/study_session.dart';
 import '../models/timer_clock.dart';
 import '../models/timer_enums.dart';
@@ -271,6 +272,9 @@ class TimerController extends Notifier<TimerState> {
     try {
       final sessionId =
           await ref.read(sessionRepositoryProvider).insertSession(session);
+      // Sesi baru masuk ke study_sessions → segarkan Riwayat agar saat dibuka
+      // menampilkan data terbaru (reset ke halaman 1 & filter kosong).
+      ref.invalidate(historyControllerProvider);
       state = state.copyWith(
         status: TimerRunStatus.finished,
         elapsedSeconds: elapsed,
