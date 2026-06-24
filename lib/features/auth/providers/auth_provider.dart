@@ -187,7 +187,16 @@ class AuthNotifier extends Notifier<AppAuthState> {
     if (m.contains('password') && m.contains('weak')) {
       return 'Password terlalu lemah. Gunakan minimal 8 karakter.';
     }
-    if (m.contains('network') || m.contains('connection')) {
+    // Termasuk error DNS/socket umum agar tidak menampilkan stack-trace ke user
+    // (mis. di emulator dengan DNS bermasalah atau saat HP offline/WiFi captive).
+    if (m.contains('network') ||
+        m.contains('connection') ||
+        m.contains('failed host lookup') ||
+        m.contains('socketexception') ||
+        m.contains('no address associated') ||
+        m.contains('clientexception') ||
+        m.contains('timeout') ||
+        m.contains('unreachable')) {
       return 'Tidak dapat terhubung. Periksa koneksi internet Anda.';
     }
     return message;
