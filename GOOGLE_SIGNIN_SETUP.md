@@ -61,7 +61,13 @@ App (Flutter)
 
 ### 1.5 Dapatkan SHA-1 Fingerprint (untuk Android)
 
-Buka **Command Prompt** atau **PowerShell** dan jalankan:
+> **PENTING:** APK debug (`flutter run`) dan APK release (`flutter build apk
+> --release`) menggunakan **keystore yang BERBEDA**, sehingga **SHA-1 berbeda**.
+> Google OAuth menolak request dari APK yang SHA-1-nya belum terdaftar.
+> **DUA SHA-1 wajib didaftarkan** di Android OAuth Client (debug + release),
+> kalau tidak Google Sign-In akan gagal diam-diam di salah satu build.
+
+#### SHA-1 debug (untuk `flutter run` / install APK debug)
 
 ```powershell
 keytool -list -v `
@@ -71,19 +77,34 @@ keytool -list -v `
   -keypass android
 ```
 
-Cari baris `SHA1:` pada output. Contoh:
+#### SHA-1 release (untuk APK rilis yang ditandatangani keystore Fase 9)
+
+```powershell
+keytool -list -v `
+  -keystore "C:\Users\THIN\Documents\Tugas Kuliah\Project 3\keystore\slt-release.jks" `
+  -alias slt `
+  -storepass slt_skripsi_2026
+```
+
+Cari baris `SHA1:` pada masing-masing output. Contoh format:
 ```
 SHA1: AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD
 ```
 
-### 1.6 Buat OAuth Client ID — Tipe Android
+### 1.6 Buat / Edit OAuth Client ID — Tipe Android
 
-1. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
-2. Application type: **Android**
+1. **APIs & Services → Credentials**
+2. Klik OAuth Client ID Android yang sudah ada (atau **Create Credentials →
+   OAuth client ID → Android** bila belum ada).
 3. Package name: `com.skripsi.smart_learning_tracker`
-4. SHA-1 certificate fingerprint: paste SHA-1 dari langkah 1.5
-5. Klik **Create**
-6. Client ID Android **tidak memerlukan Client Secret** — cukup didaftarkan
+4. Di bagian **SHA-1 certificate fingerprints**, klik tombol untuk menambah
+   baris baru → **DAFTARKAN KEDUA SHA-1** (debug DAN release). Satu OAuth
+   Client Android boleh punya banyak SHA-1 — tidak perlu bikin dua client
+   terpisah.
+5. Klik **Save**.
+6. Tunggu beberapa menit (kadang sampai ~5 menit) sampai perubahan SHA-1
+   ter-propagate ke server Google sebelum testing ulang.
+7. Client ID Android **tidak memerlukan Client Secret** — cukup didaftarkan.
 
 ---
 
