@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Akses internet — WAJIB untuk Supabase, OpenRouter, OAuth, dll.
+         CATATAN: di build DEBUG, Flutter otomatis menambahkan ini lewat
+         android/app/src/debug/AndroidManifest.xml (untuk hot reload), tapi di
+         build RELEASE TIDAK auto-ditambahkan. Tanpa ini, semua HTTP call dari
+         APK release gagal diam-diam dengan SocketException. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Foreground service untuk timer belajar (flutter_foreground_task) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
